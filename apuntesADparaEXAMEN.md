@@ -19,8 +19,8 @@
     <!-- Conector Java para MongoDB -->
     <dependency>
         <groupId>org.mongodb</groupId>
-        <artifactId>mongo-java-driver</artifactId>
-        <version>4.5.1</version>
+        <artifactId>mongodb-driver-sync</artifactId>
+        <version>4.9.0</version>
     </dependency>
 
     <!-- Para manipulación de JSON y XML -->
