@@ -187,7 +187,11 @@ Levanta tu aplicación y accede a: http://localhost:8080/swagger-ui/. Aquí podr
 > [!TIP] Cosas que debes recordar:
 > 
 > ✅ Usa MongoDB Compass para visualizar la base de datos y hacer consultas rápidas.
+> 
 > ✅ No te olvides de cerrar la conexión a la base de datos para evitar bloqueos.
-> ✅ Usa índices para mejorar el rendimiento en consultas grandes.
+> 
+> ✅ Usa índices para mejorar el rendimiento en consultas grandes.  
+> 
 > ✅ Mantén el código modular y reutilizable, creando métodos separados para cada operación.
+> 
 > ✅ Respeta las convenciones de nombres en las colecciones y documentos para mantener la coherencia.
