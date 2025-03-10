@@ -36,7 +36,12 @@
 
 > [!TIP] Si no puedes conectarte...
 >
-> Asegúrate de que MongoDB esté en ejecución.
+> Asegúrate de que MongoDB esté en ejecución, si no lo tienes, ejecuta el comando:
+> 
+> ```bash
+> sudo systemctl start mongod
+> ```
+> 
 > Verifica que la URL de conexión mongodb://localhost:27017 sea correcta.
 
 ```java
@@ -59,21 +64,26 @@ public class MongoConnection {
 #### 3️⃣ 🆕 Crear una colección e insertar datos manualmente
 
 ```java
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
 public class InsertarDatos {
     public static void main(String[] args) {
-        MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
-        MongoCollection<Document> coleccion = db.getCollection("pokemon");
-        
-        Document pokemon = new Document("nombre", "Pikachu")
-                .append("tipo", "Eléctrico")
-                .append("nivel", 10);
-        
-        coleccion.insertOne(pokemon);
-        System.out.println("✅ Pokémon insertado correctamente");
+        try {
+            MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
+            MongoCollection<Document> coleccion = db.getCollection("pokemon");
+
+            Document pokemon = new Document("nombre", "Pikachu")
+                    .append("tipo", "Eléctrico")
+                    .append("nivel", 10);
+
+            coleccion.insertOne(pokemon);
+            System.out.println("✅ Pokémon insertado correctamente");
+        } catch (Exception e) {
+            System.err.println("❌ Error al insertar el Pokémon: " + e.getMessage());
+        }
     }
 }
 ```
@@ -81,17 +91,33 @@ public class InsertarDatos {
 #### 4️⃣ 📂 Insertar datos usando JSON
 
 ```java
-import java.nio.file.*;
-import org.bson.Document;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
 
 public class InsertarDesdeJSON {
     public static void main(String[] args) throws Exception {
-        String json = Files.readString(Path.of("pokemon.json"));
-        Document doc = Document.parse(json);
-        MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
-        db.getCollection("pokemon").insertOne(doc);
-        System.out.println("✅ Datos insertados desde JSON");
+        try {
+            String json = Files.readString(Path.of("pokemon.json"));
+            ObjectMapper mapper = new ObjectMapper();
+            List<Document> pokemones = mapper.readValue(json, new TypeReference<List<Document>>() {
+            });
+
+            MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
+            MongoCollection<Document> coleccion = db.getCollection("pokemon");
+            coleccion.insertMany(pokemones);
+
+            System.out.println("✅ Datos insertados desde JSON");
+        } catch (Exception e) {
+            System.err.println("❌ Error al insertar los datos: " + e.getMessage());
+        }
     }
 }
 ```
@@ -100,14 +126,24 @@ public class InsertarDesdeJSON {
 
 ```java
 import com.mongodb.client.FindIterable;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
 
 public class LeerDatos {
     public static void main(String[] args) {
-        MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
-        MongoCollection<Document> coleccion = db.getCollection("pokemon");
-        FindIterable<Document> documentos = coleccion.find();
-        for (Document doc : documentos) {
-            System.out.println(doc.toJson());
+        try {
+            MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
+            MongoCollection<org.bson.Document> coleccion = db.getCollection("pokemon");
+            FindIterable<org.bson.Document> documentos = coleccion.find();
+            System.out.println("📋 Listado de Pokémon:");
+            for (Document doc : documentos) {
+                System.out.println("🔹 " + doc.toJson());
+            }
+            System.out.println("✅ Fin del listado");
+        } catch (Exception e) {
+            System.err.println("❌ Error al leer los datos: " + e.getMessage());
         }
     }
 }
@@ -115,27 +151,86 @@ public class LeerDatos {
 
 #### 6️⃣ 📤 Exportar a JSON/XML
 
+Implementamos la siguiente dependencia en el pom.xml:
+
+```xml
+<dependency>
+    <groupId>com.fasterxml.jackson.dataformat</groupId>
+    <artifactId>jackson-dataformat-xml</artifactId>
+    <version>2.15.0</version>
+</dependency>
+```
+
+##### Primer elemento
+
 ```java
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
+
 import java.io.File;
 
 public class ExportarDatos {
-    public static void main(String[] args) throws Exception {
-        MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
-        MongoCollection<Document> coleccion = db.getCollection("pokemon");
-        Document doc = coleccion.find().first();
-        
-        ObjectMapper jsonMapper = new ObjectMapper();
-        jsonMapper.writeValue(new File("pokemon.json"), doc);
-        
-        XmlMapper xmlMapper = new XmlMapper();
-        xmlMapper.writeValue(new File("pokemon.xml"), doc);
-        
-        System.out.println("✅ Datos exportados a JSON y XML");
+    public static void main(String[] args) {
+        try {
+            MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
+            MongoCollection<Document> coleccion = db.getCollection("pokemon");
+            Document doc = coleccion.find().first(); // Exportaremos solo el primer elemento
+
+            ObjectMapper jsonMapper = new ObjectMapper();
+            jsonMapper.writeValue(new File("pokemon.json"), doc);
+
+            XmlMapper xmlMapper = new XmlMapper();
+            xmlMapper.writeValue(new File("pokemon.xml"), doc);
+
+            System.out.println("✅ Datos exportados a JSON y XML");
+        } catch (Exception e) {
+            System.err.println("❌ Error al exportar los datos: " + e.getMessage());
+        }
     }
 }
 ```
+
+##### Todos los elementos
+
+```java
+package org.example;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import org.bson.Document;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ExportarDatos {
+    public static void main(String[] args) {
+        try {
+            MongoDatabase db = MongoClients.create("mongodb://localhost:27017").getDatabase("miBaseDatos");
+            MongoCollection<Document> coleccion = db.getCollection("pokemon");
+            List<Document> documentos = new ArrayList<>();
+            coleccion.find().into(documentos);
+
+            ObjectMapper jsonMapper = new ObjectMapper();
+            jsonMapper.writeValue(new File("pokemon.json"), documentos);
+
+            XmlMapper xmlMapper = new XmlMapper();
+            xmlMapper.writeValue(new File("pokemon.xml"), documentos);
+
+            System.out.println("✅ Datos exportados a JSON y XML");
+        } catch (Exception e) {
+            System.err.println("❌ Error al exportar los datos: " + e.getMessage());
+        }
+    }
+}
+``` 
 
 ### 🚀 Implementación de Swagger para Documentación de API
 
