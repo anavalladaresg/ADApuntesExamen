@@ -1,6 +1,6 @@
 # 📚 Guía Completa MongoDB - Ejercicios de Repaso
 
-> [!INFO]
+> [!NOTE]
 > 
 > Esta guía está diseñada para ayudarte a comprender la estructura y resolución de ejercicios típicos con MongoDB Compass.
 
@@ -136,6 +136,51 @@ public class ExportarDatos {
     }
 }
 ```
+
+### 🚀 Implementación de Swagger para Documentación de API
+
+> [!NOTE] ¿Qué es Swagger?
+>
+> Swagger es una herramienta que permite documentar y probar APIs de manera sencilla. Genera una interfaz interactiva donde puedes ver y probar los endpoints de tu aplicación sin necesidad de usar Postman o herramientas similares.
+
+#### 🛠️ Configurar Swagger en un Proyecto con Java
+
+1. Añadir dependencias en pom.xml:
+
+```xml
+<dependency>
+    <groupId>io.springfox</groupId>
+    <artifactId>springfox-boot-starter</artifactId>
+    <version>3.0.0</version>
+</dependency>
+```
+
+2. Crear la configuración de Swagger en Java:
+
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spring.web.plugins.Docket;
+
+@Configuration
+public class SwaggerConfig {
+    @Bean
+    public Docket api() {
+        return new Docket(DocumentationType.SWAGGER_2)
+                .select()
+                .apis(RequestHandlerSelectors.any())
+                .paths(PathSelectors.any())
+                .build();
+    }
+}
+```
+
+3. Acceder a la documentación de la API:    
+
+Levanta tu aplicación y accede a: http://localhost:8080/swagger-ui/. Aquí podrás ver los endpoints y probarlos de forma interactiva.
 
 ### 💡 ProTips 
 
